@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <title>Machine Predictive Maintenance Dashboard</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+
+        body
+        {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f2f4f7;
+        }
+
+        .header
+        {
+            background: #1f2937;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header h1
+        {
+            margin: 0;
+        }
+
+        .container
+        {
+            padding: 25px;
+        }
+
+        .cards
+        {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .card
+        {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .card h3
+        {
+            margin-top: 0;
+            color: #555;
+        }
+
+        .value
+        {
+            font-size: 30px;
+            font-weight: bold;
+        }
+
+        .healthy
+        {
+            color: green;
+        }
+
+        .warning
+        {
+            color: orange;
+        }
+
+        .critical
+        {
+            color: red;
+        }
+
+        .chart-container
+        {
+            background: white;
+            padding: 20px;
+            margin-bottom: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        canvas
+        {
+            max-height: 350px;
+        }
+
+
+        .fault-history
+{
+    margin-top: 30px;
+    padding: 20px;
+
+    background: white;
+
+    border-radius: 10px;
+}
+
+
+.fault-history h2
+{
+    margin-bottom: 15px;
+}
+
+
+table
+{
+    width: 100%;
+
+    border-collapse: collapse;
+}
+
+
+th,
+td
+{
+    padding: 12px;
+
+    text-align: left;
+
+    border-bottom: 1px solid #ddd;
+}
+
+
+th
+{
+    font-weight: bold;
+}
+
+.machine-alert
+{
+    margin-bottom: 25px;
+    padding: 20px;
+
+    border-radius: 10px;
+
+    text-align: center;
+}
+
+
+.machine-alert h2
+{
+    margin: 0;
+}
+
+
+.machine-alert p
+{
+    margin-top: 8px;
+}
+
+
+.machine-alert.healthy
+{
+    background: #d4edda;
+}
+
+
+.machine-alert.warning
+{
+    background: #fff3cd;
+}
+
+
+.machine-alert.critical
+{
+    background: #f8d7da;
+}
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<div class="header">
+
+    <h1>Machine Predictive Maintenance Dashboard</h1>
+
+    <p>Real-Time Machine Health Monitoring</p>
+     
+    <div id="machineAlert" class="machine-alert healthy">
+
+    <h2 id="alertTitle">
+        MACHINE HEALTHY
+    </h2>
+
+    <p id="alertMessage">
+        System is operating normally
+    </p>
+
+</div>
+
+</div>
+
+
+<div class="container">
+
+
+    <!-- Health Cards -->
+
+    <div class="cards">
+
+
+        <div class="card">
+
+            <h3>Machine Health</h3>
+
+            <div class="value healthy" id="healthScore">
+                100
+            </div>
+
+            <p id="healthStatus">
+                HEALTHY
+            </p>
+
+        </div>
+
+
+        <div class="card">
+
+            <h3>Vibration</h3>
+
+            <div class="value" id="vibration">
+                0.00
+            </div>
+
+            <p>mm/s</p>
+
+        </div>
+
+
+        <div class="card">
+
+            <h3>Temperature</h3>
+
+            <div class="value" id="temperature">
+                0.00
+            </div>
+
+            <p>°C</p>
+
+        </div>
+
+
+        <div class="card">
+
+            <h3>Current</h3>
+
+            <div class="value" id="current">
+                0.00
+            </div>
+
+            <p>A</p>
+
+        </div>
+        
+            <div class="card">
+
+            <h3>Fault Status</h3>
+
+            <div class="value healthy" id="faultStatus">
+                NO FAULT
+            </div>
+
+            <p id="faultDetails">
+                System Operating Normally
+            </p>
+
+        </div>
+            
+            <div class="card">
+
+            <h3>Total Samples</h3>
+
+            <div class="value" id="totalSamples">
+                0
+            </div>
+
+            <p>
+                Historical Records
+            </p>
+
+        </div>
+
+
+        <div class="card">
+
+            <h3>Last Update</h3>
+
+            <div class="value" id="lastUpdate">
+                --
+            </div>
+
+            <p>
+                Latest Sensor Reading
+            </p>
+
+        </div>
+
+    </div>
+
+    <div class="fault-history">
+
+    <h2>Fault Event History</h2>
+
+    <table>
+
+        <thead>
+
+            <tr>
+                <th>Sample</th>
+                <th>Fault Type</th>
+                <th>Status</th>
+            </tr>
+
+        </thead>
+
+        <tbody id="faultTableBody">
+
+            <!-- Fault data will come here -->
+
+        </tbody>
+
+    </table>
+
+</div>
+
+    <!-- Vibration Chart -->
+
+    <div class="chart-container">
+
+        <h2>Vibration Monitoring</h2>
+
+        <canvas id="vibrationChart"></canvas>
+
+    </div>
+
+
+    <!-- Temperature Chart -->
+
+    <div class="chart-container">
+
+        <h2>Temperature Monitoring</h2>
+
+        <canvas id="temperatureChart"></canvas>
+
+    </div>
+
+
+    <!-- Current Chart -->
+
+    <div class="chart-container">
+
+        <h2>Motor Current Monitoring</h2>
+
+        <canvas id="currentChart"></canvas>
+
+    </div>
+
+
+</div>
+
+<script>
+
+const samples = [];
+const vibrationData = [];
+const temperatureData = [];
+const currentData = [];
+const timestamps = [];
+
+function calculateHealthScore()
+{
+    let score = 100;
+
+    let totalVibration = 0;
+    let totalTemperature = 0;
+    let totalCurrent = 0;
+
+    let maxVibration = 0;
+    let maxTemperature = 0;
+    let maxCurrent = 0;
+
+
+    for (let i = 0; i < vibrationData.length; i++)
+    {
+        totalVibration += vibrationData[i];
+        totalTemperature += temperatureData[i];
+        totalCurrent += currentData[i];
+
+
+        if (vibrationData[i] > maxVibration)
+        {
+            maxVibration = vibrationData[i];
+        }
+
+
+        if (temperatureData[i] > maxTemperature)
+        {
+            maxTemperature = temperatureData[i];
+        }
+
+
+        if (currentData[i] > maxCurrent)
+        {
+            maxCurrent = currentData[i];
+        }
+    }
+
+
+    const count = vibrationData.length;
+
+
+    const avgVibration = totalVibration / count;
+    const avgTemperature = totalTemperature / count;
+    const avgCurrent = totalCurrent / count;
+
+
+    /*
+     * Same health score logic
+     * as analysis.c
+     */
+
+
+    if (avgVibration > 2.0)
+    {
+        score -= 15;
+    }
+
+    if (avgVibration > 3.0)
+    {
+        score -= 15;
+    }
+
+    if (maxVibration > 3.5)
+    {
+        score -= 10;
+    }
+
+
+    if (avgTemperature > 55.0)
+    {
+        score -= 15;
+    }
+
+    if (maxTemperature > 70.0)
+    {
+        score -= 15;
+    }
+
+
+    if (avgCurrent > 4.5)
+    {
+        score -= 10;
+    }
+
+    if (maxCurrent > 5.5)
+    {
+        score -= 10;
+    }
+
+
+    if (score < 0)
+    {
+        score = 0;
+    }
+
+
+    return score;
+}
+
+function updateMachineAlert(healthScore)
+{
+    const alertBox =
+        document.getElementById("machineAlert");
+
+    const alertTitle =
+        document.getElementById("alertTitle");
+
+    const alertMessage =
+        document.getElementById("alertMessage");
+
+
+    if (healthScore >= 80)
+    {
+        alertBox.className =
+            "machine-alert healthy";
+
+        alertTitle.innerText =
+            "MACHINE HEALTHY";
+
+        alertMessage.innerText =
+            "System is operating normally";
+    }
+
+    else if (healthScore >= 60)
+    {
+        alertBox.className =
+            "machine-alert warning";
+
+        alertTitle.innerText =
+            "MACHINE WARNING";
+
+        alertMessage.innerText =
+            "Maintenance attention may be required";
+    }
+
+    else if (healthScore >= 40)
+    {
+        alertBox.className =
+            "machine-alert warning";
+
+        alertTitle.innerText =
+            "MACHINE CONDITION POOR";
+
+        alertMessage.innerText =
+            "Maintenance inspection is recommended";
+    }
+
+    else
+    {
+        alertBox.className =
+            "machine-alert critical";
+
+        alertTitle.innerText =
+            "MACHINE CRITICAL";
+
+        alertMessage.innerText =
+            "Immediate maintenance required";
+    }
+}
+
+/* Load actual CSV file */
+
+fetch("../data/machine_data.csv")
+    .then(response =>
+    {
+        if (!response.ok)
+        {
+            throw new Error("Unable to load CSV file");
+        }
+
+        return response.text();
+    })
+
+    .then(csvData =>
+    {
+        const lines = csvData.trim().split("\n");
+
+        /*
+         * Line 0 is header:
+         * Sample,Vibration,Temperature,Current
+         */
+
+        for (let i = 1; i < lines.length; i++)
+        {
+            const values = lines[i].trim().split(",");
+
+            if (values.length < 5)
+            {
+                continue;
+            }
+
+            const timestamp = values[0];
+
+            const sample = parseInt(values[1]);
+
+            const vibration = parseFloat(values[2]);
+
+            const temperature = parseFloat(values[3]);
+
+            const current = parseFloat(values[4]);
+            
+            timestamps.push(timestamp);
+
+            samples.push(sample);
+
+            vibrationData.push(vibration);
+
+            temperatureData.push(temperature);
+
+            currentData.push(current);
+        }
+
+
+        /* Check data */
+
+        if (samples.length === 0)
+        {
+            console.log("No sensor data found");
+            return;
+        }
+        
+        const lastIndex = samples.length - 1;
+
+        document.getElementById("totalSamples").innerText =
+            samples.length;
+
+        document.getElementById("lastUpdate").innerText =
+            timestamps[lastIndex];
+
+        const healthScore = calculateHealthScore();
+
+        updateMachineAlert(healthScore);
+
+        document.getElementById("healthScore").innerText =
+        healthScore + " / 100";
+        
+        let machineStatus;
+        let statusClass;
+
+        if (healthScore >= 80)
+        {
+            machineStatus = "HEALTHY";
+            statusClass = "healthy";
+        }
+        else if (healthScore >= 60)
+        {
+        machineStatus = "WARNING";
+        statusClass = "warning";
+        }
+        else if (healthScore >= 40)
+        {
+        machineStatus = "POOR";
+        statusClass = "warning";
+        }
+        else
+        {
+        machineStatus = "CRITICAL";
+        statusClass = "critical";
+        }
+
+        document.getElementById("healthStatus").innerText =
+        machineStatus;
+
+
+        document.getElementById("healthScore").className =
+        "value " + statusClass;
+
+        /* Latest sensor values */
+
+
+        document.getElementById("vibration").innerText =
+            vibrationData[lastIndex].toFixed(2);
+
+
+        document.getElementById("temperature").innerText =
+            temperatureData[lastIndex].toFixed(2);
+
+
+        document.getElementById("current").innerText =
+            currentData[lastIndex].toFixed(2);
+
+
+        /* Create charts */
+
+        createCharts();
+
+        loadFaultStatus();
+
+        loadFaultHistory();
+    })
+
+
+    .catch(error =>
+    {
+        console.error("Error loading CSV:", error);
+
+        alert("Unable to load machine_data.csv");
+    });
+
+
+function createCharts()
+{
+    /* Vibration Chart */
+
+    new Chart(
+        document.getElementById("vibrationChart"),
+        {
+            type: "line",
+
+            data:
+            {
+                labels: samples,
+
+                datasets:
+                [{
+                    label: "Vibration (mm/s)",
+
+                    data: vibrationData,
+
+                    borderWidth: 2,
+
+                    tension: 0.3
+                }]
+            },
+
+            options:
+            {
+                responsive: true,
+
+                scales:
+                {
+                    x:
+                    {
+                        title:
+                        {
+                            display: true,
+
+                            text: "Sample Number"
+                        }
+                    },
+
+                    y:
+                    {
+                        title:
+                        {
+                            display: true,
+
+                            text: "Vibration (mm/s)"
+                        }
+                    }
+                }
+            }
+        }
+    );
+
+
+    /* Temperature Chart */
+
+    new Chart(
+        document.getElementById("temperatureChart"),
+        {
+            type: "line",
+
+            data:
+            {
+                labels: samples,
+
+                datasets:
+                [{
+                    label: "Temperature (°C)",
+
+                    data: temperatureData,
+
+                    borderWidth: 2,
+
+                    tension: 0.3
+                }]
+            },
+
+            options:
+            {
+                responsive: true
+            }
+        }
+    );
+
+
+    /* Current Chart */
+
+    new Chart(
+        document.getElementById("currentChart"),
+        {
+            type: "line",
+
+            data:
+            {
+                labels: samples,
+
+                datasets:
+                [{
+                    label: "Current (A)",
+
+                    data: currentData,
+
+                    borderWidth: 2,
+
+                    tension: 0.3
+                }]
+            },
+
+            options:
+            {
+                responsive: true
+            }
+        }
+    );
+}
+
+function loadFaultStatus()
+{
+    fetch("../logs/fault_log.csv")
+        .then(response =>
+        {
+            if (!response.ok)
+            {
+                throw new Error("Unable to load fault log");
+            }
+
+            return response.text();
+        })
+
+        .then(csvData =>
+        {
+            const lines = csvData.trim().split("\n");
+
+
+            /*
+             * Agar sirf header hai,
+             * matlab koi fault nahi mila
+             */
+
+            if (lines.length <= 1)
+            {
+                document.getElementById("faultStatus").innerText =
+                    "NO FAULT";
+
+                document.getElementById("faultDetails").innerText =
+                    "System Operating Normally";
+
+                document.getElementById("faultStatus").className =
+                    "value healthy";
+
+                return;
+            }
+
+
+            /*
+             * Last fault event read karo
+             */
+
+            const lastLine =
+                lines[lines.length - 1].trim();
+
+
+            const values =
+                lastLine.split(",");
+
+
+            const faultEvent =
+                values[6];
+
+
+            if (faultEvent.includes("BEARING"))
+            {
+                document.getElementById("faultStatus").innerText =
+                    "BEARING FAULT";
+
+                document.getElementById("faultDetails").innerText =
+                    "Bearing degradation detected";
+
+                document.getElementById("faultStatus").className =
+                    "value critical";
+            }
+
+
+            else if (faultEvent.includes("OVERHEATING"))
+            {
+                document.getElementById("faultStatus").innerText =
+                    "OVERHEATING";
+
+                document.getElementById("faultDetails").innerText =
+                    "Motor temperature is too high";
+
+                document.getElementById("faultStatus").className =
+                    "value critical";
+            }
+
+
+            else if (faultEvent.includes("OVERLOAD"))
+            {
+                document.getElementById("faultStatus").innerText =
+                    "OVERLOAD";
+
+                document.getElementById("faultDetails").innerText =
+                    "Motor current overload detected";
+
+                document.getElementById("faultStatus").className =
+                    "value critical";
+            }
+
+
+            else if (faultEvent.includes("FAULT_CLEARED"))
+            {
+                document.getElementById("faultStatus").innerText =
+                    "NO FAULT";
+
+                document.getElementById("faultDetails").innerText =
+                    "Previous fault cleared";
+
+                document.getElementById("faultStatus").className =
+                    "value healthy";
+            }
+
+        })
+
+        .catch(error =>
+        {
+            console.error("Error loading fault log:", error);
+        });
+}
+
+/* Auto refresh dashboard every 5 seconds */
+
+setInterval(() =>
+{
+    location.reload();
+},
+5000);
+
+function loadFaultHistory()
+{
+    fetch("../logs/fault_log.csv")
+        .then(response =>
+        {
+            if (!response.ok)
+            {
+                throw new Error("Unable to load fault history");
+            }
+
+            return response.text();
+        })
+
+        .then(csvData =>
+        {
+            const lines = csvData.trim().split("\n");
+
+            const tableBody =
+                document.getElementById("faultTableBody");
+
+
+            /* Clear old rows */
+
+            tableBody.innerHTML = "";
+
+
+            /*
+             * No fault events
+             */
+
+            if (lines.length <= 1)
+            {
+                const row =
+                    document.createElement("tr");
+
+                row.innerHTML =
+                    "<td colspan='3'>No fault events recorded</td>";
+
+                tableBody.appendChild(row);
+
+                return;
+            }
+
+
+            /*
+             * Start from 1 because line 0 is header
+             */
+
+            for (let i = 1; i < lines.length; i++)
+            {
+                const values =
+                    lines[i].trim().split(",");
+
+
+                if (values.length === 0)
+                {
+                    continue;
+                }
+
+
+                const row =
+                    document.createElement("tr");
+
+
+                /*
+                 * Sample number is usually first column.
+                 * Fault event is usually last column.
+                 */
+
+                const sample =
+                    values[0];
+
+
+                const faultEvent =
+                    values[values.length - 1];
+
+
+                let faultType =
+                    "NO FAULT";
+
+
+                let status =
+                    "ACTIVE";
+
+
+                if (faultEvent.includes("BEARING"))
+                {
+                    faultType =
+                        "BEARING FAULT";
+                }
+
+                else if (faultEvent.includes("OVERHEATING"))
+                {
+                    faultType =
+                        "OVERHEATING";
+                }
+
+                else if (faultEvent.includes("OVERLOAD"))
+                {
+                    faultType =
+                        "OVERLOAD";
+                }
+
+                else if (faultEvent.includes("CLEARED"))
+                {
+                    faultType =
+                        "FAULT CLEARED";
+
+                    status =
+                        "CLEARED";
+                }
+
+
+                row.innerHTML =
+                    "<td>" + sample + "</td>" +
+                    "<td>" + faultType + "</td>" +
+                    "<td>" + status + "</td>";
+
+
+                tableBody.appendChild(row);
+            }
+        })
+
+        .catch(error =>
+        {
+            console.error(
+                "Error loading fault history:",
+                error
+            );
+        });
+}
+
+function loadFaultHistory()
+{
+    fetch("../logs/fault_log.csv")
+        .then(response =>
+        {
+            if (!response.ok)
+            {
+                throw new Error("Unable to load fault history");
+            }
+
+            return response.text();
+        })
+
+        .then(csvData =>
+        {
+            const lines = csvData.trim().split("\n");
+
+            const tableBody =
+                document.getElementById("faultTableBody");
+
+            tableBody.innerHTML = "";
+
+            if (lines.length <= 1)
+            {
+                const row =
+                    document.createElement("tr");
+
+                row.innerHTML =
+                    "<td colspan='3'>No fault events recorded</td>";
+
+                tableBody.appendChild(row);
+
+                return;
+            }
+
+            for (let i = 1; i < lines.length; i++)
+            {
+                const values =
+                    lines[i].trim().split(",");
+
+                if (values.length === 0)
+                {
+                    continue;
+                }
+
+                const row =
+                    document.createElement("tr");
+
+                const sample =
+                    values[0];
+
+                const faultEvent =
+                    values[values.length - 1];
+
+                let faultType =
+                    "NO FAULT";
+
+                let status =
+                    "ACTIVE";
+
+                if (faultEvent.includes("BEARING"))
+                {
+                    faultType =
+                        "BEARING FAULT";
+                }
+
+                else if (faultEvent.includes("OVERHEATING"))
+                {
+                    faultType =
+                        "OVERHEATING";
+                }
+
+                else if (faultEvent.includes("OVERLOAD"))
+                {
+                    faultType =
+                        "OVERLOAD";
+                }
+
+                else if (faultEvent.includes("CLEARED"))
+                {
+                    faultType =
+                        "FAULT CLEARED";
+
+                    status =
+                        "CLEARED";
+                }
+
+                row.innerHTML =
+                    "<td>" + sample + "</td>" +
+                    "<td>" + faultType + "</td>" +
+                    "<td>" + status + "</td>";
+
+                tableBody.appendChild(row);
+            }
+        })
+
+        .catch(error =>
+        {
+            console.error(
+                "Error loading fault history:",
+                error
+            );
+        });
+}
+
+</script>
+
+</body>
+
+</html>
